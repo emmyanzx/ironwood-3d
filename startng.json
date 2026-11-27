@@ -1,0 +1,53 @@
+{
+  "description": "Pilot an armored war mech across windswept desert dunes, transform into a 6-wheel combat car, deploy hover drones and missile pods, and survive escalating robot waves.",
+  "story": "Beyond the sandstone mesas of Ironwood Basin, rogue crimson war robots are marching across the dunes. Drop in with the transforming AEGIS unit, harvest emerald Energy Cores to level up your chassis, and hold the skirmish line.",
+  "categories": [
+    "shooting-and-action",
+    "3d-games",
+    "space-and-sci-fi",
+    "racing-and-driving",
+    "survival"
+  ],
+  "leaderboard": {
+    "stats": [
+      { "key": "score", "label": "Score", "order": "highest" },
+      { "key": "waves", "label": "Waves", "order": "highest" },
+      { "key": "kills", "label": "Mechs destroyed", "order": "highest" }
+    ]
+  },
+  "controls": [
+    "W A S D or Arrow keys — Move war mech or drive 6-wheel car",
+    "Mouse + Left Click — Aim and fire active weapon",
+    "Right Click (hold) — Raise frontal energy Brace Shield",
+    "T — Transform between War Mech and 6-wheel Combat Car",
+    "G H J K L — Switch between 5 weapon styles (Aegis, Bulwark, Twin Fire, Hammerfall, Quake)",
+    "F — Fire homing missile salvo",
+    "Shift + A / D — Thruster side-roll dodge",
+    "X / Z — Switch between Siege Mode and Strider Mode",
+    "Q — Cycle target lock between enemy mechs",
+    "4 — Deploy Support Squad (2 hover drones + 3 armored cars)",
+    "5 — Deploy autonomous Missile Pod (20s)",
+    "Esc — Pause, graphics preset, audio, and leaderboard"
+  ],
+  "howToPlay": [
+    "Click the battlefield to lock aim and fire at advancing crimson enemy war robots.",
+    "Use G, H, J, K, and L to switch between rapid miniguns, heavy autocannons, dual plasma repeaters, railgun slugs, and explosive mortars.",
+    "Press T anytime to transform into a 6-wheel armored combat car to flank dunes at high speed and ram enemies.",
+    "Collect glowing emerald Energy Cores dropped by fallen enemies to raise your Tier and upgrade Rail, Pods, and Plate.",
+    "Deploy your Support Squad (4) and Missile Pod (5) whenever heavy waves press your line."
+  ],
+  "features": [
+    "Real-time 3D Three.js desert dune battlefield with craggy sandstone mesa cover and scorched blast craters",
+    "Seamless transformation between twin-minigun War Mech and 6-wheel armored combat car",
+    "5 distinct weapon styles plus homing missile salvos and energy Brace Shield",
+    "Allied Support Squad (hover drones and armored cars) and deployable Missile Pods",
+    "Auto-detected Eco GPU preset for smooth framerates on laptops and mobile devices",
+    "start.ng pilot profile card, global leaderboard, and X score sharing"
+  ],
+  "walkthrough": [
+    "Use the sandstone mesas on the left flank as solid cover whenever heavy crimson mechs open fire.",
+    "Grab emerald Energy Cores early to hit Tier 2 and boost hull, plate armor, and weapon damage.",
+    "Switch to Siege Mode (X) with Hammerfall (K) railgun slugs to snipe heavy enemies across the ridge.",
+    "Transform into 6-wheel Car Mode (T) to outrun fire, sweep up scattered cores, and ram isolated enemies."
+  ]
+}

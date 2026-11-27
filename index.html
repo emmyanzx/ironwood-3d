@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Ironwood — 3D Mech Battlefield (Three.js)</title>
+    <meta
+      name="description"
+      content="AAA-style Three.js desert battlefield game: armored war robots, transforming 6-wheel combat cars, 5 weapon styles, support squads, and deployable missile pods."
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23161418'/%3E%3Cpath d='M16 14h8v14h16V14h8v36h-8V36H24v14h-8z' fill='%23e5a64e'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%234ade80'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://start.ng/kit.js" data-back="off" data-badge="off" defer></script>
+  </head>
+  <body>
+    <canvas id="world"></canvas>
+
+    <!-- Dynamic 3D Projected Target Lock & Enemy HP Layer -->
+    <div id="world-overlay">
+      <div id="reticle" class="reticle">
+        <div class="reticle-ring"></div>
+        <div class="reticle-dot"></div>
+        <div class="reticle-brackets" id="lock-brackets">
+          <span class="b tl"></span>
+          <span class="b tr"></span>
+          <span class="b bl"></span>
+          <span class="b br"></span>
+        </div>
+      </div>
+      <div id="enemy-bars"></div>
+    </div>
+
+    <!-- Ironwood Tactical HUD -->
+    <div id="hud">
+      <!-- Top Row -->
+      <div class="hud-top">
+        <div class="top-left-stack">
+          <div class="wave-card">
+            <div class="wave-num" id="wave-num">1</div>
+            <div class="wave-meta">
+              <div class="wave-title">Ironwood</div>
+              <div class="wave-sub" id="wave-sub">Skirmish line · 5 on the field</div>
+            </div>
+          </div>
+
+          <div class="sng-bar">
+            <a class="sng-back" href="https://start.ng" title="Back to start.ng">← start.ng</a>
+            <div class="pilot-pill" id="pilot-card">
+              <img id="pilot-face" alt="" hidden />
+              <div class="pilot-info">
+                <b id="pilot-name">Guest Pilot</b>
+                <span id="pilot-account">Made on start.ng</span>
+              </div>
+              <button id="pilot-signin" class="pilot-signin" type="button" hidden>Sign in</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-right-stack">
+          <div class="keybind-strip">
+            <span><kbd>WASD</kbd> move</span>
+            <span><kbd>Mouse</kbd> look</span>
+            <span><kbd>LMB</kbd> fire</span>
+            <span><kbd>RMB</kbd> brace</span>
+            <span><kbd>Scroll</kbd> zoom</span>
+            <span><kbd>Q</kbd> next enemy</span>
+            <span><kbd>F</kbd> missile</span>
+            <span><kbd>Shift+A/D</kbd> side roll</span>
+            <span><kbd>T</kbd> car</span>
+            <span><kbd>X</kbd> siege</span>
+            <span><kbd>Z</kbd> strider</span>
+            <span><kbd>P</kbd> freeze</span>
+            <span><kbd>Esc</kbd> settings</span>
+          </div>
+
+          <div class="ability-stack">
+            <button class="ability-card" id="btn-squad" type="button">
+              <div class="ab-head">
+                <kbd>4</kbd>
+                <span class="ab-title">Support squad</span>
+              </div>
+              <div class="ab-sub" id="squad-sub">2 drones + 3 cars ready</div>
+            </button>
+
+            <button class="ability-card" id="btn-pod" type="button">
+              <div class="ab-head">
+                <kbd>5</kbd>
+                <span class="ab-title">Missile pod</span>
+              </div>
+              <div class="ab-sub" id="pod-sub">Ready · 20s deployment</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event / Callout Toast -->
+      <div id="callout" class="callout"></div>
+
+      <!-- Bottom Row -->
+      <div class="hud-bottom">
+        <!-- Bottom-Left Armor / Heat / Cells -->
+        <div class="bottom-left">
+          <div class="vitals-card">
+            <div class="vital-row">
+              <span class="v-lbl">PLATE</span>
+              <div class="v-track"><div class="v-fill plate" id="plate-fill" style="width: 100%"></div></div>
+              <span class="v-val" id="plate-val">100</span>
+            </div>
+            <div class="vital-row">
+              <span class="v-lbl">HEAT</span>
+              <div class="v-track"><div class="v-fill heat" id="heat-fill" style="width: 0%"></div></div>
+              <span class="v-val" id="heat-val">0%</span>
+            </div>
+            <div class="vital-row">
+              <span class="v-lbl">CELLS</span>
+              <div class="cells-grid" id="cells-grid"></div>
+              <span class="v-val" id="cells-val">6</span>
+            </div>
+          </div>
+
+          <button class="pause-btn" id="btn-pause" type="button" title="Pause / Settings (Esc)">II</button>
+        </div>
+
+        <!-- Bottom-Center Weapon Deck + Hull Bar + Utility Row -->
+        <div class="bottom-center">
+          <div class="loadout-row" id="loadout-row">
+            <button class="loadout-slot active" data-slot="0" type="button">
+              <span class="slot-key">G</span>
+              <span class="slot-name">AEGIS</span>
+              <span class="slot-tag">T1</span>
+            </button>
+            <button class="loadout-slot" data-slot="1" type="button">
+              <span class="slot-key">H</span>
+              <span class="slot-name">BULWARK</span>
+              <span class="slot-tag">T2</span>
+            </button>
+            <button class="loadout-slot" data-slot="2" type="button">
+              <span class="slot-key">J</span>
+              <span class="slot-name">TWIN FIRE</span>
+              <span class="slot-tag">T3</span>
+            </button>
+            <button class="loadout-slot" data-slot="3" type="button">
+              <span class="slot-key">K</span>
+              <span class="slot-name">HAMMERFALL</span>
+              <span class="slot-tag">T4</span>
+            </button>
+            <button class="loadout-slot" data-slot="4" type="button">
+              <span class="slot-key">L</span>
+              <span class="slot-name">QUAKE</span>
+              <span class="slot-tag">T5</span>
+            </button>
+          </div>
+
+          <div class="hull-bar-wrap">
+            <div class="hull-fill" id="hull-fill" style="width: 100%"></div>
+            <span class="hull-lbl">HULL</span>
+            <span class="hull-val" id="hull-val">140 / 140</span>
+          </div>
+
+          <div class="util-bar">
+            <button class="util-btn" id="btn-restart" type="button">Restart</button>
+            <button class="util-btn" id="btn-drive" type="button">Drive · <kbd>T</kbd></button>
+            <button class="util-btn" id="btn-stance" type="button">Strider · <kbd>Z</kbd></button>
+            <div class="util-stat">Shots <span id="shots-val">0</span></div>
+            <button class="util-btn" id="btn-gfx" type="button" title="Toggle Fast Eco vs Bloom PBR">Eco GPU</button>
+            <button class="util-btn" id="btn-share" type="button" title="Share score on X">Share</button>
+            <button class="util-btn" id="btn-studio" type="button">Studio <kbd>I</kbd></button>
+            <button class="util-btn" id="btn-fs" type="button">Fullscreen</button>
+          </div>
+        </div>
+
+        <!-- Bottom-Right Tier, Cores, Kills, Score & Tech Readout -->
+        <div class="bottom-right">
+          <div class="tier-card">
+            <div class="tier-ring">
+              <div class="tier-num" id="tier-num">1</div>
+              <div class="tier-lbl">TIER</div>
+            </div>
+            <div class="tier-stats">
+              <div><span>Cores</span><strong id="cores-val">0 / 4</strong></div>
+              <div><span>Kills</span><strong id="kills-val">0</strong></div>
+              <div><span>Score</span><strong id="score-val">0</strong></div>
+            </div>
+            <div class="upgrade-bars">
+              <div class="up-row"><span>RAIL</span><div class="up-pips" id="up-rail"></div></div>
+              <div class="up-row"><span>PODS</span><div class="up-pips" id="up-pods"></div></div>
+              <div class="up-row"><span>PLATE</span><div class="up-pips" id="up-plate"></div></div>
+            </div>
+          </div>
+          <div class="engine-badge" id="perf-badge">R180 · WEBGL · 60 FPS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Controls (shown cleanly on phones & touchscreens) -->
+    <div id="mobile-controls" class="mobile-controls" aria-label="Touch controls">
+      <div class="touch-dpad">
+        <button class="tbtn" data-m="up" type="button" aria-label="Move forward">▲</button>
+        <div class="tpad-mid">
+          <button class="tbtn" data-m="left" type="button" aria-label="Move left">◀</button>
+          <button class="tbtn" data-m="down" type="button" aria-label="Move back">▼</button>
+          <button class="tbtn" data-m="right" type="button" aria-label="Move right">▶</button>
+        </div>
+      </div>
+      <div class="touch-actions">
+        <button class="tbtn fire" data-m="fire" type="button">FIRE</button>
+        <div class="tact-row">
+          <button class="tbtn" data-m="car" type="button">CAR</button>
+          <button class="tbtn" data-m="missile" type="button">MSL</button>
+          <button class="tbtn" data-m="squad" type="button">SQD</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Click-to-Aim Hint (Non-blocking subtle prompt) -->
+    <div id="aim-hint" class="aim-hint">Click battlefield to lock aim · LMB Fire · T Transform to Car · 4 Support Squad</div>
+
+    <!-- Round Over / Score Summary Modal -->
+    <div id="gameover-modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2>IRONWOOD // UNIT DOWN</h2>
+          <span class="sng-tag">start.ng</span>
+        </div>
+        <div class="go-stats">
+          <div class="go-stat"><span>SCORE</span><strong id="go-score">0</strong></div>
+          <div class="go-stat"><span>WAVE</span><strong id="go-wave">1</strong></div>
+          <div class="go-stat"><span>KILLS</span><strong id="go-kills">0</strong></div>
+        </div>
+        <p class="go-rank" id="go-rank">Sign in on start.ng to save your best run to the leaderboard.</p>
+        <div class="modal-actions">
+          <button id="btn-play-again" class="primary-btn" type="button">Deploy Again</button>
+          <button id="btn-go-share" class="ghost-btn" type="button">Share on X</button>
+        </div>
+        <div class="go-footer">
+          Play more community games on <a href="https://start.ng">start.ng</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings / Pause Modal (Esc) -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2>IRONWOOD // FIELD SETTINGS</h2>
+          <button id="btn-close-settings" type="button" class="close-x">×</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Graphics Preset</strong>
+            <p>High PBR uses bloom & 2048 shadows; Eco boosts FPS on integrated GPUs.</p>
+          </div>
+          <button id="toggle-quality" class="set-btn active" type="button">High PBR</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Battlefield Audio</strong>
+            <p>Synthesized miniguns, railguns, explosions, servos & desert wind.</p>
+          </div>
+          <button id="toggle-audio" class="set-btn active" type="button">Sound On</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Freeze Enemies (P)</strong>
+            <p>Pause enemy AI to inspect mechs, transform modes, or test weapons.</p>
+          </div>
+          <button id="toggle-freeze" class="set-btn" type="button">Active AI</button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Camera Shake</strong>
+            <p>Reduce impact shake for calmer camera motion.</p>
+          </div>
+          <button id="toggle-shake" class="set-btn active" type="button">100%</button>
+        </div>
+        <div class="modal-actions">
+          <button id="btn-resume" class="primary-btn" type="button">Resume Skirmish</button>
+          <button id="btn-modal-restart" class="ghost-btn" type="button">Restart Wave 1</button>
+        </div>
+        <div class="go-footer">
+          Play more community games on <a href="https://start.ng">start.ng</a>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
