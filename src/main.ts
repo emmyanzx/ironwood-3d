@@ -1095,10 +1095,31 @@ pilotSigninBtn.addEventListener("click", () => {
 });
 
 function initStartNg() {
-  const kit = (window as unknown as { startng?: StartNgKit }).startng;
-  if (!kit) return;
-  kit.getPlayer?.().then(renderPilotCard).catch(() => {});
-  kit.onPlayerChange?.(renderPilotCard);
+  const sng = (window as unknown as { startng?: StartNgKit }).startng;
+  if (sng && sng.getPlayer) {
+    sng.getPlayer().then(renderPilotCard).catch(() => {});
+    sng.onPlayerChange?.(renderPilotCard);
+    return;
+  }
+  // Fallback direct connect check (startng:whoami) if kit.js hasn't attached yet
+  if (location.hostname.endsWith(".start.ng")) {
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://start.ng/connect";
+    iframe.hidden = true;
+    iframe.onload = () => {
+      const requestId = Math.random().toString(36).slice(2);
+      const onMsg = (e: MessageEvent) => {
+        if (e.origin !== "https://start.ng" || e.source !== iframe.contentWindow) return;
+        if (e.data?.type === "startng:user" && e.data.requestId === requestId) {
+          window.removeEventListener("message", onMsg);
+          renderPilotCard(e.data as StartNgReply);
+        }
+      };
+      window.addEventListener("message", onMsg);
+      iframe.contentWindow?.postMessage({ type: "startng:whoami", requestId }, "https://start.ng");
+    };
+    document.body.appendChild(iframe);
+  }
 }
 window.addEventListener("load", initStartNg);
 initStartNg();
